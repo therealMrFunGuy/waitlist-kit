@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ name }} — Waitlist</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: #fafafa; color: #111; padding: 20px;
+  }
+  .container { max-width: 560px; width: 100%; text-align: center; }
+  h1 { font-size: 42px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+  .tagline { font-size: 20px; color: #666; margin-bottom: 40px; }
+  .input-row { display: flex; gap: 8px; margin-bottom: 24px; }
+  .email-input {
+    flex: 1; padding: 16px 20px; border: 2px solid #e0e0e0; border-radius: 12px;
+    font-size: 16px; outline: none; transition: border-color 0.2s;
+  }
+  .email-input:focus { border-color: #111; }
+  .submit-btn {
+    padding: 16px 32px; background: #111; color: white; border: none;
+    border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer;
+  }
+  .submit-btn:hover { background: #333; }
+  .social-proof {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; background: white; border-radius: 100px;
+    border: 1px solid #eee; font-size: 14px; color: #666;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>{{ name }}</h1>
+  <p class="tagline">{{ tagline }}</p>
+  <form method="POST" action="/w/{{ slug }}/join">
+    <div class="input-row">
+      <input type="email" name="email" placeholder="your@email.com" required class="email-input">
+      <button type="submit" class="submit-btn">Join Waitlist</button>
+    </div>
+  </form>
+  <div class="social-proof">
+    <span class="dot"></span>
+    <span><strong>{{ total_signups }}</strong> people have joined</span>
+  </div>
+</div>
+</body>
+</html>

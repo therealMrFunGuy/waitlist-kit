@@ -1,0 +1,25 @@
+services:
+  waitlistkit:
+    build: .
+    container_name: mfg-waitlistkit
+    ports:
+      - "8430:8430"
+    volumes:
+      - waitlistkit-data:/data/waitlist-kit
+    environment:
+      - BASE_URL=${BASE_URL:-http://localhost:8430}
+      - WAITLIST_DB_PATH=/data/waitlist-kit/waitlist.db
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - RESEND_FROM=${RESEND_FROM:-WaitlistKit <noreply@waitlistkit.dev>}
+    restart: unless-stopped
+    cpus: 1
+    mem_limit: 512m
+
+volumes:
+  waitlistkit-data:
