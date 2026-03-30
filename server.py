@@ -7,11 +7,12 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Query, Header, Form, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Header, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
 from pydantic import BaseModel, EmailStr
 
+from auth_client import require_auth
 import db
 from landing import render_landing_page, render_confirmation_page, THEMES
 from referrals import get_referral_link, get_referral_stats, get_waitlist_leaderboard, calculate_viral_coefficient
@@ -20,6 +21,7 @@ from email_notify import send_welcome_email
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("waitlistkit")
 
+AUTH_SERVICE_URL = os.environ.get("AUTH_SERVICE_URL", "http://localhost:8499")
 BASE_URL = os.environ.get("BASE_URL", "http://localhost:8505")
 
 
@@ -320,7 +322,7 @@ def verify_api_key(waitlist_id: int, api_key: str):
 # --- Waitlist endpoints ---
 
 @app.post("/waitlists")
-async def create_waitlist(data: WaitlistCreate):
+async def create_waitlist(data: WaitlistCreate, auth: dict = Depends(require_auth)):
     if data.color_theme not in THEMES:
         raise HTTPException(status_code=400, detail=f"Invalid theme. Choose from: {list(THEMES.keys())}")
     wl = db.create_waitlist(
@@ -331,12 +333,12 @@ async def create_waitlist(data: WaitlistCreate):
 
 
 @app.get("/waitlists")
-async def list_waitlists():
+async def list_waitlists(auth: dict = Depends(require_auth)):
     return db.list_waitlists()
 
 
 @app.get("/waitlists/{waitlist_id}")
-async def get_waitlist(waitlist_id: int):
+async def get_waitlist(waitlist_id: int, auth: dict = Depends(require_auth)):
     wl = db.get_waitlist(waitlist_id)
     if not wl:
         raise HTTPException(status_code=404, detail="Waitlist not found")
@@ -345,7 +347,7 @@ async def get_waitlist(waitlist_id: int):
 
 
 @app.post("/waitlists/{waitlist_id}/signup")
-async def signup(waitlist_id: int, data: SignupCreate):
+async def signup(waitlist_id: int, data: SignupCreate, auth: dict = Depends(require_auth)):
     try:
         signup = db.create_signup(
             waitlist_id=waitlist_id, email=data.email,
@@ -376,7 +378,7 @@ async def signup(waitlist_id: int, data: SignupCreate):
 
 @app.get("/waitlists/{waitlist_id}/signups")
 async def list_signups(waitlist_id: int, limit: int = 100, offset: int = 0,
-                       x_api_key: str = Header(None)):
+                       x_api_key: str = Header(None), auth: dict = Depends(require_auth)):
     if not x_api_key:
         raise HTTPException(status_code=401, detail="API key required (X-Api-Key header)")
     verify_api_key(waitlist_id, x_api_key)
@@ -384,7 +386,7 @@ async def list_signups(waitlist_id: int, limit: int = 100, offset: int = 0,
 
 
 @app.get("/waitlists/{waitlist_id}/stats")
-async def get_stats(waitlist_id: int):
+async def get_stats(waitlist_id: int, auth: dict = Depends(require_auth)):
     wl = db.get_waitlist(waitlist_id)
     if not wl:
         raise HTTPException(status_code=404, detail="Waitlist not found")
@@ -394,7 +396,7 @@ async def get_stats(waitlist_id: int):
 
 
 @app.get("/waitlists/{waitlist_id}/leaderboard")
-async def leaderboard(waitlist_id: int, limit: int = 20):
+async def leaderboard(waitlist_id: int, limit: int = 20, auth: dict = Depends(require_auth)):
     wl = db.get_waitlist(waitlist_id)
     if not wl:
         raise HTTPException(status_code=404, detail="Waitlist not found")
@@ -402,7 +404,7 @@ async def leaderboard(waitlist_id: int, limit: int = 20):
 
 
 @app.get("/waitlists/{waitlist_id}/export")
-async def export_signups(waitlist_id: int, x_api_key: str = Header(None)):
+async def export_signups(waitlist_id: int, x_api_key: str = Header(None), auth: dict = Depends(require_auth)):
     if not x_api_key:
         raise HTTPException(status_code=401, detail="API key required")
     verify_api_key(waitlist_id, x_api_key)
